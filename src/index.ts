@@ -3,7 +3,7 @@ import express from "express";
 import jwt from "jsonwebtoken";
 import z from "zod";
 import bcrypt from "bcrypt";
-import { ContentModel, UserModel } from "./db";
+import { ContentModel, LinkModel, UserModel } from "./db";
 import { auth } from "./middleware";
 
 const JWT_SECRET = "genius";
@@ -161,6 +161,42 @@ app.delete("/api/v1/content", auth, async (req, res) => {
     console.log(`Error while deleting the content ${e}`);
     res.status(400).json({
       warning: "error occuured while deleting a content",
+    });
+  }
+});
+
+app.post("/api/v1/share", auth, async (req, res) => {
+  const share = req.body.share;
+  const userId = req.userId;
+  await LinkModel.create({
+    hash: share,
+    userId,
+  });
+  try {
+    res.json({
+      userId,
+    });
+  } catch (e) {
+    console.log(e);
+    res.json({
+      warning: "error occured while creating shareable links",
+    });
+  }
+});
+
+app.get("/api/v1/sharelink", async (req, res) => {
+  const link = req.body.link;
+  try {
+    const getContent = await ContentModel.find({
+      userId: link,
+    });
+    res.json({
+      getContent,
+    });
+  } catch (e) {
+    console.log(e);
+    res.json({
+      warning: "error occurred while getting content",
     });
   }
 });

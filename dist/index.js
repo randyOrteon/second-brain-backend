@@ -171,6 +171,42 @@ app.delete("/api/v1/content", middleware_1.auth, (req, res) => __awaiter(void 0,
         });
     }
 }));
+app.post("/api/v1/share", middleware_1.auth, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const share = req.body.share;
+    const userId = req.userId;
+    yield db_1.LinkModel.create({
+        hash: share,
+        userId,
+    });
+    try {
+        res.json({
+            userId,
+        });
+    }
+    catch (e) {
+        console.log(e);
+        res.json({
+            warning: "error occured while creating shareable links",
+        });
+    }
+}));
+app.get("/api/v1/sharelink", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const link = req.body.link;
+    try {
+        const getContent = yield db_1.ContentModel.find({
+            userId: link,
+        });
+        res.json({
+            getContent,
+        });
+    }
+    catch (e) {
+        console.log(e);
+        res.json({
+            warning: "error occurred while getting content",
+        });
+    }
+}));
 const mongooseConnect = () => __awaiter(void 0, void 0, void 0, function* () {
     yield mongoose_1.default.connect("mongodb+srv://akshitvig213:ghBbfvwFrwMK8UCM@cluster0.wvw0s.mongodb.net/Second-Brain");
     app.listen(port, () => {
