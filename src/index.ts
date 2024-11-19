@@ -1,0 +1,176 @@
+import mongoose from "mongoose";
+import express from "express";
+import jwt from "jsonwebtoken";
+import z from "zod";
+import bcrypt from "bcrypt";
+import { ContentModel, UserModel } from "./db";
+import { auth } from "./middleware";
+
+const JWT_SECRET = "genius";
+
+const app = express();
+app.use(express.json());
+
+const port = 3002;
+
+app.post("/api/v1/signup", async (req, res) => {
+  const inputSchema = z.object({
+    username: z
+      .string()
+      .min(3, { message: "min 3 letters" })
+      .max(10, { message: "max 10 letters" }),
+    password: z
+      .string()
+      .min(8, { message: "min 8 letters" })
+      .max(20, { message: "max 20 letters" })
+      .regex(/\W/, { message: "must contain a special character" })
+      .regex(/[A-Z]/, { message: "must contain an uppercase letter" })
+      .regex(/[a-z]/, { message: "must contain a lowercase letter" }),
+  });
+  const validInputs = inputSchema.safeParse(req.body);
+
+  if (!validInputs.success) {
+    const errormessages = validInputs.error.errors.map((e) => e.message);
+    res.status(411).json({
+      message: "invalid format",
+      error: errormessages,
+    });
+    return;
+  }
+  const { username, password } = req.body;
+  const hashedpass = await bcrypt.hash(password, 7);
+  try {
+    const sameusername = await UserModel.findOne({
+      username: username,
+    });
+    if (!sameusername) {
+      await UserModel.create({
+        username: username,
+        password: hashedpass,
+      });
+      res.status(200).json({
+        message: "user created successfully",
+      });
+    } else {
+      res.status(403).json({
+        warning: "username already taken",
+      });
+    }
+  } catch (error) {
+    console.log(`Error during signup ${error}`);
+    res.status(500).json({
+      warning: "error occured while creating a user",
+    });
+  }
+});
+
+app.post("/api/v1/signin", async (req, res) => {
+  const { username, password } = req.body;
+
+  const finduser = await UserModel.findOne({ username: username });
+
+  if (!finduser) {
+    res.status(403).json({
+      warning: "user doesn't exist",
+    });
+  }
+  if (finduser === null) {
+    return;
+  }
+  if (finduser.password) {
+    try {
+      const hashedpass = await bcrypt.compare(password, finduser.password);
+      if (hashedpass) {
+        if (finduser._id) {
+          const token = jwt.sign({ id: finduser._id }, JWT_SECRET);
+
+          res.status(200).json({
+            message: "user signed in successfully",
+            token: token,
+          });
+        }
+      } else {
+        res.status(403).json({
+          warning: "wrong password",
+        });
+      }
+    } catch (e) {
+      res.status(400).json({
+        warning: "internal server error ocuured ",
+      });
+    }
+  } else {
+    res.json({
+      warning: "password not set for this user",
+    });
+  }
+});
+
+app.post("/api/v1/content", auth, async (req, res) => {
+  const { link, title, type } = req.body;
+
+  try {
+    await ContentModel.create({
+      title: title,
+      type: type,
+      link: link,
+      tags: [],
+      userId: req.userId,
+    });
+    res.status(200).json({
+      message: "Content added successfully",
+    });
+  } catch (e) {
+    console.log(`Error occurred ${e}`);
+    res.status(401).json({
+      warning: "error occured while adding content",
+    });
+  }
+});
+
+app.get("/api/v1/content", auth, async (req, res) => {
+  const userId = req.userId;
+
+  try {
+    const content = await ContentModel.find({
+      userId: userId,
+    }).populate("userId", "username");
+    res.status(200).json({
+      content,
+    });
+  } catch (e) {
+    console.log(`Error ocurerd while fetching contents ${e}`);
+    res.status(400).json({
+      warning: "error occurred while fetching content",
+    });
+  }
+});
+
+app.delete("/api/v1/content", auth, async (req, res) => {
+  const contentId = req.body.contentId;
+
+  try {
+    await ContentModel.deleteMany({
+      _id: contentId,
+      userId: req.userId,
+    });
+    res.json({
+      message: "content deleted successfully",
+    });
+  } catch (e) {
+    console.log(`Error while deleting the content ${e}`);
+    res.status(400).json({
+      warning: "error occuured while deleting a content",
+    });
+  }
+});
+
+const mongooseConnect = async () => {
+  await mongoose.connect(
+    "mongodb+srv://akshitvig213:ghBbfvwFrwMK8UCM@cluster0.wvw0s.mongodb.net/Second-Brain"
+  );
+  app.listen(port, () => {
+    console.log(`started listening on PORT ${port}`);
+  });
+};
+mongooseConnect();
