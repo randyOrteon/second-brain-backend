@@ -1,7 +1,5 @@
-import { hash } from "bcrypt";
 import mongoose, { mongo, Types } from "mongoose";
 import { Schema } from "mongoose";
-import { string } from "zod";
 
 const userSchema = new Schema({
   username: { type: String, require: true, unique: true },
@@ -20,7 +18,12 @@ const contentSchema = new Schema({
 
 const linkSchema = new Schema({
   hash: { type: String, require: true },
-  userId: { type: mongoose.Types.ObjectId, require: true, ref: "user" },
+  userId: {
+    type: mongoose.Types.ObjectId,
+    unique: true,
+    require: true,
+    ref: "user",
+  },
 });
 
 export const ContentModel = mongoose.model("content", contentSchema);

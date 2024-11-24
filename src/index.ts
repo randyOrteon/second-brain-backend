@@ -5,8 +5,8 @@ import z from "zod";
 import bcrypt from "bcrypt";
 import { ContentModel, LinkModel, UserModel } from "./db";
 import { auth } from "./middleware";
-
-const JWT_SECRET = "genius";
+import { random } from "./utils";
+require("dotenv").config();
 
 const app = express();
 app.use(express.json());
@@ -82,7 +82,7 @@ app.post("/api/v1/signin", async (req, res) => {
       const hashedpass = await bcrypt.compare(password, finduser.password);
       if (hashedpass) {
         if (finduser._id) {
-          const token = jwt.sign({ id: finduser._id }, JWT_SECRET);
+          const token = jwt.sign({ id: finduser._id }, process.env.SECRET!);
 
           res.status(200).json({
             message: "user signed in successfully",
@@ -167,44 +167,73 @@ app.delete("/api/v1/content", auth, async (req, res) => {
 
 app.post("/api/v1/share", auth, async (req, res) => {
   const share = req.body.share;
-  const userId = req.userId;
-  await LinkModel.create({
-    hash: share,
-    userId,
-  });
   try {
-    res.json({
-      userId,
-    });
+    if (share) {
+      const hash = random(15);
+      await LinkModel.create({
+        hash: hash,
+        userId: req.userId,
+      });
+
+      res.status(200).json({
+        message: `Here's your brain link - ${hash}`,
+      });
+    } else {
+      await LinkModel.deleteOne({
+        userId: req.userId,
+      });
+      res.status(200).json({
+        message: "your brain link is removed",
+      });
+    }
   } catch (e) {
     console.log(e);
-    res.json({
-      warning: "error occured while creating shareable links",
+    res.status(500).json({
+      message: "an unexpected error occured",
     });
   }
 });
 
-app.get("/api/v1/sharelink", async (req, res) => {
-  const link = req.body.link;
+app.get("/api/v1/:sharelink", async (req, res) => {
+  const hash = req.params.sharelink;
   try {
-    const getContent = await ContentModel.find({
-      userId: link,
+    const link = await LinkModel.findOne({
+      hash,
     });
-    res.json({
-      getContent,
+
+    if (!link) {
+      res.status(400).json({
+        message: "invalid link",
+      });
+      return;
+    }
+
+    const content = await ContentModel.find({
+      userId: link.userId,
+    });
+    const user = await UserModel.findById(link.userId);
+
+    if (!user) {
+      res.status(400).json({
+        message: "user is not found",
+      });
+      return;
+    }
+
+    res.status(200).json({
+      username: user.username,
+      content: content,
     });
   } catch (e) {
     console.log(e);
-    res.json({
-      warning: "error occurred while getting content",
+    res.status(400).json({
+      message: "An error occurred while processing the sharelink",
     });
   }
 });
 
 const mongooseConnect = async () => {
-  await mongoose.connect(
-    "mongodb+srv://akshitvig213:ghBbfvwFrwMK8UCM@cluster0.wvw0s.mongodb.net/Second-Brain"
-  );
+  await mongoose.connect(process.env.MONGO_URL!);
   app.listen(port, () => {
     console.log(`started listening on PORT ${port}`);
   });
