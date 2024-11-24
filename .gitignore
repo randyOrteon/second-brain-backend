@@ -1,3 +1,10 @@
-node_modules
-outdir
+
+node_modules/
+
+
+outdir/
+
+
 .env
+
+tsconfig.tsbuildinfo
