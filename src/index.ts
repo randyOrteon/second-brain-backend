@@ -7,9 +7,12 @@ import { ContentModel, LinkModel, UserModel } from "./db";
 import { auth } from "./middleware";
 import { random } from "./utils";
 require("dotenv").config();
+import cors from "cors";
 
 const app = express();
 app.use(express.json());
+
+app.use(cors());
 
 const port = 3002;
 

@@ -6,11 +6,9 @@ const userSchema = new Schema({
   password: { type: String, require: true },
 });
 
-const contentTypes = ["image", "video", "audio", "article"];
-
 const contentSchema = new Schema({
   title: { type: String, require: true },
-  type: { type: String, enum: contentTypes, require: true },
+  type: { type: String, require: true },
   link: { type: String, require: true },
   tags: [{ type: Types.ObjectId, ref: "tag" }],
   userId: { type: Types.ObjectId, ref: "user", require: true },
