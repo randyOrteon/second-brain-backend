@@ -237,10 +237,16 @@ app.get("/api/v1/:sharelink", async (req, res) => {
 
 const mongooseConnect = async () => {
   await mongoose.connect(
-    "mongodb+srv://akshitvig213:ghBbfvwFrwMK8UCM@cluster0.wvw0s.mongodb.net/Second-Brain"
+    "mongodb+srv://akshitvig213:ghBbfvwFrwMK8UCM@cluster0.wvw0s.mongodb.net/",
+    {
+      tlsAllowInvalidCertificates: false,
+      tlsAllowInvalidHostnames: false,
+      ssl: true,
+    }
   );
   app.listen(port, () => {
     console.log(`started listening on PORT ${port}`);
   });
 };
+
 mongooseConnect();
