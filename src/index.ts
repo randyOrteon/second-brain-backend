@@ -179,7 +179,7 @@ app.post("/api/v1/share", auth, async (req, res) => {
       });
 
       res.status(200).json({
-        message: `Here's your brain link - ${hash}`,
+        message: `${hash}`,
       });
     } else {
       await LinkModel.deleteOne({
