@@ -6,7 +6,7 @@ import bcrypt from "bcrypt";
 import { ContentModel, LinkModel, UserModel } from "./db";
 import { auth } from "./middleware";
 import { random } from "./utils";
-require("dotenv").config();
+const SECRET = "GENIUS";
 import cors from "cors";
 
 const app = express();
@@ -85,7 +85,7 @@ app.post("/api/v1/signin", async (req, res) => {
       const hashedpass = await bcrypt.compare(password, finduser.password);
       if (hashedpass) {
         if (finduser._id) {
-          const token = jwt.sign({ id: finduser._id }, process.env.SECRET!);
+          const token = jwt.sign({ id: finduser._id }, SECRET);
 
           res.status(200).json({
             message: "user signed in successfully",
@@ -236,7 +236,9 @@ app.get("/api/v1/:sharelink", async (req, res) => {
 });
 
 const mongooseConnect = async () => {
-  await mongoose.connect(process.env.MONGO_URL!);
+  await mongoose.connect(
+    "mongodb+srv://akshitvig213:ghBbfvwFrwMK8UCM@cluster0.wvw0s.mongodb.net/Second-Brain"
+  );
   app.listen(port, () => {
     console.log(`started listening on PORT ${port}`);
   });

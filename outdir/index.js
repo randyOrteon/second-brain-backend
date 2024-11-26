@@ -20,7 +20,7 @@ const bcrypt_1 = __importDefault(require("bcrypt"));
 const db_1 = require("./db");
 const middleware_1 = require("./middleware");
 const utils_1 = require("./utils");
-require("dotenv").config();
+const SECRET = "GENIUS";
 const cors_1 = __importDefault(require("cors"));
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
@@ -93,7 +93,7 @@ app.post("/api/v1/signin", (req, res) => __awaiter(void 0, void 0, void 0, funct
             const hashedpass = yield bcrypt_1.default.compare(password, finduser.password);
             if (hashedpass) {
                 if (finduser._id) {
-                    const token = jsonwebtoken_1.default.sign({ id: finduser._id }, process.env.SECRET);
+                    const token = jsonwebtoken_1.default.sign({ id: finduser._id }, SECRET);
                     res.status(200).json({
                         message: "user signed in successfully",
                         token: token,
@@ -238,7 +238,7 @@ app.get("/api/v1/:sharelink", (req, res) => __awaiter(void 0, void 0, void 0, fu
     }
 }));
 const mongooseConnect = () => __awaiter(void 0, void 0, void 0, function* () {
-    yield mongoose_1.default.connect(process.env.MONGO_URL);
+    yield mongoose_1.default.connect("mongodb+srv://akshitvig213:ghBbfvwFrwMK8UCM@cluster0.wvw0s.mongodb.net/Second-Brain");
     app.listen(port, () => {
         console.log(`started listening on PORT ${port}`);
     });

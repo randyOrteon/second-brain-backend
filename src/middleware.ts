@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
+const SECRET = "GENIUS";
 
 interface JwtPayloadWithId extends JwtPayload {
   id: string;
@@ -7,10 +8,7 @@ interface JwtPayloadWithId extends JwtPayload {
 
 export const auth = (req: Request, res: Response, next: NextFunction) => {
   const token = req.headers["authorization"];
-  const decodedToken = jwt.verify(
-    token as string,
-    process.env.SECRET!
-  ) as JwtPayloadWithId;
+  const decodedToken = jwt.verify(token as string, SECRET) as JwtPayloadWithId;
 
   if (decodedToken) {
     req.userId = decodedToken.id;
